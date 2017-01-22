@@ -14,7 +14,7 @@ from copy import deepcopy
 from copy import copy
 
 
-TIME_LIMIT_MILLIS = 200
+TIME_LIMIT_MILLIS = 150
 
 
 class Board(object):
@@ -272,19 +272,36 @@ class Board(object):
         p1_r, p1_c = self.__last_player_move__[self.__player_1__]
         p2_r, p2_c = self.__last_player_move__[self.__player_2__]
 
-        out = ''
+        out = '    0   1   2   3   4   5   6\n'
+        
+        # for move in  self.get_legal_moves():
+        #         for i,j in move:
+        #             out='X
 
+
+        # if player is None:
+        #     player = self.active_player
+        # legal_moves=self.__get_moves__(self.__last_player_move__[player])
+        legal_moves=self.get_legal_moves(player=self.active_player)
+        #print(legal_moves)
+        count=0
         for i in range(self.height):
-            out += ' | '
+            out += str(i)+' | '
 
-            for j in range(self.width):
+            for j in range(self.width):       
 
-                if not self.__board_state__[i][j]:
+                if (i,j) in legal_moves:
+                    out += str(count);
+                    count+=1
+                elif not self.__board_state__[i][j]:
                     out += ' '
                 elif i == p1_r and j == p1_c:
-                    out += '1'
+                    out += 'A'
                 elif i == p2_r and j == p2_c:
-                    out += '2'
+                    out += 'B'
+                elif (i,j) in legal_moves:
+                    out += 'X'
+                   
                 else:
                     out += '-'
 
@@ -323,6 +340,8 @@ class Board(object):
 
             move_start = curr_time_millis()
             time_left = lambda : time_limit - (curr_time_millis() - move_start)
+
+            # print(self.print_board())  # PRINT BOARD FOR HUMAN
             curr_move = self.active_player.get_move(game_copy, legal_player_moves, time_left)
             move_end = time_left()
 
@@ -336,6 +355,7 @@ class Board(object):
             else:
                 move_history[-1].append(curr_move)
 
+            #ENABLE THIS FOR TIMEOUT
             if move_end < 0:
                 return self.__inactive_player__, move_history, "timeout"
 

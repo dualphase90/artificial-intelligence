@@ -35,6 +35,7 @@ class NullEval():
         """
 
         if game.is_loser(player):
+
             return float("-inf")
 
         if game.is_winner(player):
@@ -229,6 +230,8 @@ class HumanPlayer():
             terminal prompt; automatically return (-1, -1) if there are no
             legal moves
         """
+        print(game.print_board())
+        
         if not legal_moves:
             return (-1, -1)
 
@@ -237,9 +240,10 @@ class HumanPlayer():
         valid_choice = False
         while not valid_choice:
             try:
+
                 index = int(raw_input('Select move index:'))
                 valid_choice = 0 <= index < len(legal_moves)
-
+                  
                 if not valid_choice:
                     print('Illegal move! Try again.')
 

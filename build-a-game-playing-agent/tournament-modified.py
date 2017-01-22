@@ -34,7 +34,7 @@ from sample_players import ImprovedEval
 from game_agent import CustomPlayer
 from game_agent import CustomEval
 
-NUM_MATCHES = 5  # play 5 matches against each opponent
+NUM_MATCHES = 1  # play 5 matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
 
 TIMEOUT_WARNING = "One or more agents lost a match this round due to " + \
@@ -45,6 +45,8 @@ TIMEOUT_WARNING = "One or more agents lost a match this round due to " + \
                   "tournament play."
 
 Agent = namedtuple("Agent", ["player", "name"])
+
+
 def play_match(player1, player2):
     """
     Play a "fair" set of matches between two agents by playing two games
@@ -108,7 +110,7 @@ def play_round(agents, ratings, num_matches):
         wins = {agent_1.player: 0., agent_2.player: 0.}
 
         names = [agent_1.name, agent_2.name]
-        print "  Match {}: {!s:^11} vs {!s:^11}".format(idx + 1, *names),
+        print "  Match {}: {!s:^11} vs {!s:^11} \n".format(idx + 1, *names),
 
         # Each player takes a turn going first
         for p1, p2 in itertools.permutations((agent_1.player, agent_2.player)):
@@ -138,23 +140,25 @@ def play_round(agents, ratings, num_matches):
 def main():
 
     EVAL_FUNCS = [("Null", NullEval), ("Open", OpenMoveEval), ("Improved", ImprovedEval)]
-    AB_ARGS = {"search_depth": 5, "method": 'alphabeta', "iterative": True}
+    AB_ARGS = {"search_depth": 5, "method": 'alphabeta', "iterative": False}
     MM_ARGS = {"search_depth": 3, "method": 'minimax', "iterative": False}
-    CUSTOM_ARGS = {"method": 'alphabeta', 'iterative': True,"search_depth":10}
-    RATINGS = {"MM_Null": 1350, "MM_Open": 1575, "MM_Improved": 1620,
-               "AB_Null": 1510, "AB_Open": 1640, "AB_Improved": 1660,
-               "Random": 1150, "ID_Improved": 1500, "Student": 1500, "Human": 1000}
+    CUSTOM_ARGS = {"method": 'alphabeta', 'iterative': True}
+   # RATINGS = {"MM_Null": 1350, "MM_Open": 1575, "MM_Improved": 1620,
+    #           "AB_Null": 1510, "AB_Open": 1640, "AB_Improved": 1660,
+     #          "Random": 1150, "ID_Improved": 1500, "Student": 1500, "Human": 1000}
    
-    #RATINGS = {"MM_Null": 1000, "MM_Open": 1000, "MM_Improved": 1000,
-     #          "AB_Null": 1000, "AB_Open": 1000, "AB_Improved": 1000,
-      #         "Random": 1000, "ID_Improved": 1000, "Student": 1000, "Human": 1000}
+    RATINGS = {#"MM_Null": 1000, "MM_Open": 1000, "MM_Improved": 1000,
+               #"AB_Null": 1000, "AB_Open": 1000, "AB_Improved": 1000,
+               #"Random": 1000,
+               "Student": 1000 , "Human": 1000}
 
 
-    mm_agents = [Agent(CustomPlayer(eval_fn=fn(), **MM_ARGS), "MM_" + name) for name, fn in EVAL_FUNCS]
-    ab_agents = [Agent(CustomPlayer(eval_fn=fn(), **AB_ARGS), "AB_" + name) for name, fn in EVAL_FUNCS]
-    random_agents = [Agent(RandomPlayer(), "Random")]
+
+   # mm_agents = [Agent(CustomPlayer(eval_fn=fn(), **MM_ARGS), "MM_" + name) for name, fn in EVAL_FUNCS]
+    #ab_agents = [Agent(CustomPlayer(eval_fn=fn(), **AB_ARGS), "AB_" + name) for name, fn in EVAL_FUNCS]
+    #random_agents = [Agent(RandomPlayer(), "Random")]
     human_agents = [Agent(HumanPlayer(), "Human")]
-    test_agents = [Agent(CustomPlayer(eval_fn=ImprovedEval(), **CUSTOM_ARGS), "ID_Improved"),
+    test_agents = [#Agent(CustomPlayer(eval_fn=ImprovedEval(), **CUSTOM_ARGS), "ID_Improved"),
                    Agent(CustomPlayer(eval_fn=CustomEval(), **CUSTOM_ARGS), "Student")]
 
     for agentUT in test_agents:
@@ -163,11 +167,7 @@ def main():
         print "{:^25}".format("Evaluating " + agentUT.name)
         print "*************************"
 
-        agents =  ab_agents+random_agents +mm_agents +  [agentUT]  
-        for agent in agents:
-            if agent.name != "Random":
-             print(agent.name,"    ",agent.player.search_depth,"     ",agent.player.method)
-
+        agents =  human_agents+[agentUT]#mm_agents + ab_agents +  + [agentUT]   
         #agents = human_agents + [agentUT]     # FOR HUMAN PLAYER
         ratings = play_round(agents, dict([(a.player, RATINGS[a.name]) for a in agents]), NUM_MATCHES)
 
@@ -177,6 +177,7 @@ def main():
         print "{!s:<15}{!s:>10}".format("Name", "Rating")
         print "{!s:<15}{!s:>10}".format("---", "---")
         print "\n".join(["{!s:<15}{:>10.2f}".format(a.name, r) for a, r in ranking])
+
 
 if __name__ == "__main__":
     main()

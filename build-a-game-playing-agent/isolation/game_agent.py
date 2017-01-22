@@ -10,10 +10,8 @@ report.
 """
 from random import randint
 import random
-import math
-        
-random.seed(14000)
-counter=0
+random.seed(4)
+
 class Timeout(Exception):
     """ Subclass base exception for code clarity. """
     pass
@@ -47,25 +45,9 @@ class CustomEval():
         """
         own_moves = len(game.get_legal_moves(player))
         opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-        x=1.0 
-        y=6.0 
-        z=40.0
-        location=game.get_player_location(player)
-        # CENTER= (4,4)
-        #centrality = math.hypot(4.0 - location[0], 4.0 - location[1])*(1-(counter/(counter+10)))
-
-        mobility=(x*(own_moves))-((y*opp_moves))#* (49-len(game.get_blank_spaces())))
-        
-        # print("Own Moves ",own_moves)
-        # # print("Opp Moves", opp_moves)
-        # # print("Remaining Squares ",len(game.get_blank_spaces()))
-        # # print("Remaining squares Factor",float((len(game.get_blank_spaces()))/z))
-        # print("mobilty   ",mobility)
-        # # print("")
-        # print("centrality  ",centrality)
-        score= mobility#-(centrality/4.0)
-
-        #print(score)
+        x=1
+        y=1 
+        score=float(x*(own_moves)-(y*opp_moves))
         #score= float(own_moves+1)/(opp_moves+1)
         player_num= 1 if game.__player_1__==player else 2
         #x=[0, 0.2, 0.4, 0.6, 0.8, 1]
@@ -123,21 +105,21 @@ class CustomPlayer():
         You MAY modify this function, but the interface must remain compatible
         with the version provided.
         """
-        self.counter=0
+        self.node_count=0
         #self.node_count_AB=0
         self.eval_fn = eval_fn
         self.search_depth = search_depth
         self.iterative = iterative
         self.method = method
         self.time_left = None
-        self.TIMER_THRESHOLD = 1  # time (in ms) to leave on the clock when terminating search
+        self.TIMER_THRESHOLD = 10  # time (in ms) to leave on the clock when terminating search
         #self.search_depth=3
         print("search depth",self.search_depth)
 
 
 
     def get_move(self, game, legal_moves, time_left):
-        """
+        """d
         Search for the best move from the available legal moves and return a
         result before the time limit expires.
 
@@ -182,16 +164,16 @@ class CustomPlayer():
             return (-1, -1)
 
 
-        #try:
+        try:
             # print(legal_moves)
 
             #print("------Before Minimax-------")
             #print(game.print_board())
             #self.method="alphabeta" if self.method== "alphabeta" else "minimax"   
-            # if self.method=="alphabeta":
-            #     score,move=(self.alphabeta(game,depth=self.search_depth,maximizing_player=True))	
-            # else:
-            #     score,move=(self.minimax(game,depth=self.search_depth,maximizing_player=True))    
+            if self.method=="alphabeta":
+                score,move=(self.alphabeta(game,depth=self.search_depth,maximizing_player=True))	
+            else:
+                score,move=(self.minimax(game,depth=self.search_depth,maximizing_player=True))    
            
             #print("legal moves      ",legal_moves)
            # print("scores   ",score,move)
@@ -199,35 +181,22 @@ class CustomPlayer():
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
+            # when the timer gets close to expiring
+			   
+
+
            
-
-        MM_AB = self.minimax if self.method=='minimax' else self.alphabeta
-
-        # if no moves, return default
-        bestMove,bestMoveVal = ((-1, -1), float('-inf'))
-        if not legal_moves: return (-1, -1)
-
-        try:
-            # Set start_depth,end_depth based on iterative deepening condition
-            start_depth,end_depth = (0,100) if self.iterative else (0,self.search_depth)  
-            for depth in range(start_depth,end_depth+1):
-                score, best_move = (MM_AB(game,depth=depth,maximizing_player=True))
-            
 
         except Timeout:
 
             # Handle any actions required at timeout, if necessary
-            #print(depth)
-            if not self.iterative:
-                 return legal_moves[0]
-                 
-            #print('-- TIMEOUT --')
+       	    print('-- TIMEOUT --')
 
 
         # Return the best move from the last completed search iteration
         #print(scores)
         #print("scores   =",best_move)
-        return best_move
+        return move
 
         #raise NotImplementedError
         #return legal_moves[0] if legal_moves else (-1, -1)
@@ -271,8 +240,8 @@ class CustomPlayer():
         """
         
 
-        if self.time_left() < self.TIMER_THRESHOLD:
-           raise Timeout()
+       # if self.time_left() < self.TIMER_THRESHOLD:
+        #    raise Timeout()
         
         scores = []
         
@@ -302,7 +271,59 @@ class CustomPlayer():
 
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
-        """    
+        # if maximizing, player is active player; else, opponent
+        player = game.active_player
+
+        # for either case, we're going to need to get their list of legal moves
+        moves = game.get_legal_moves()
+
+        # base case: go either to depth or the end of the game (no child nodes)
+        if depth == 0 or not moves:
+            evalFrom = player if maximizing_player else game.get_opponent(player)
+            score = self.eval_fn.score(game, evalFrom)
+            return (score,(-1,-1))
+        
+        bestMove=(-1,3)
+        # max or min? max: max values, next is min; vice versa
+        if maximizing_player:
+            bestVal = float('-inf')
+            for move in moves:
+                childBoard = game.forecast_move(move)
+                moveVal,currentMove = self.alphabeta(childBoard, depth - 1, alpha=alpha, beta=beta, maximizing_player=False)
+                #print(moveVal,bestMove)
+                if moveVal>bestVal:
+                    bestVal=moveVal
+                    bestMove=move
+
+                
+                #print(moveVal,bestMove)
+               
+                alpha = max(alpha, bestVal) # new: check against current alpha
+
+
+                # if bestVal>bestVal:
+                #     bestVal=moveVal
+                #     bestMove=currentMove
+                
+                #print(bestVal,beta)
+                if bestVal>=beta: break # new: prune if there's an opportunity
+
+
+            return bestVal,bestMove
+        else: # minimizing_player
+            bestVal = float('inf')
+            for move in moves:
+                childBoard = game.forecast_move(move)
+                moveVal,currentMove = self.alphabeta(childBoard, depth - 1, alpha=alpha, beta=beta)
+                #bestVal = min(bestVal, moveVal)
+                if moveVal<bestVal:
+                    bestVal=moveVal
+                    bestMove=move
+                beta = min(beta, bestVal) # new: check against current beta
+                if bestVal <= alpha: break # new: prune if there's an opportunity
+            return bestVal,bestMove
+        
+        """
         Implement minimax search with alpha-beta pruning as described in the
         lectures.
 
@@ -343,74 +364,62 @@ class CustomPlayer():
 
             YOU ARE ALLOWED TO CHANGE THE OUTPUT INTERFACE OF THIS FUNCTION
         """
-        
-    # TODO: finish this function!      
-    
-       
+    """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        moves = game.get_legal_moves()
-        player = game.active_player
-         
-        # BASE CASE: 
-        if depth == 0 or not moves:
-            evalFrom = player if maximizing_player else game.get_opponent(player)
-            score = self.eval_fn.score(game, evalFrom)
-            return (score,(-1,-1))
-        
-        bestMove=(-1,-1)
-        bestVal = float('-inf') if maximizing_player else float('inf')
-        
-
-
-
-
-
-        # for move in moves:
-        #     childBoard = game.forecast_move(move)                 
-        #     #print(moveVal,bestMove)
-        #     if maximizing_player:
-        #         moveVal,currentMove = self.alphabeta(childBoard, depth - 1, alpha=alpha, beta=beta, maximizing_player=False)            
-        #         if moveVal>bestVal:
-        #             bestVal=moveVal
-        #             bestMove=move
-        #         alpha = max(alpha, bestVal) # new: check against current alpha
-        #         if bestVal>=beta: break # new: prune if there's an opportunity
-
-        #     return bestVal,bestMove    
-
-        #     if not maximizing_player:
-        #         moveVal,currentMove = self.alphabeta(childBoard, depth - 1, alpha=alpha, beta=beta)
-        #         if moveVal<bestVal:
-        #             bestVal=moveVal
-        #             bestMove=move
-        #         beta = min(beta, bestVal) # new: check against current beta
-        #         if bestVal <= alpha: break # new: prune if there's an opportunity
-        #     return bestVal,bestMove
-     
-
-
-        if maximizing_player:      
-            for move in moves:
-                Board = game.forecast_move(move)
-                moveVal,currentMove = self.alphabeta(Board, depth - 1, alpha=alpha, beta=beta, maximizing_player=False)
-                if moveVal>bestVal:
-                    bestVal=moveVal
-                    bestMove=move                
+    # TODO: finish this function!      
     
-                alpha = max(alpha, bestVal) 
-                if bestVal>=beta: break 
-            return bestVal,bestMove
-        else: 
+    
+        # BASE CASE
+        if not legal_moves or depth == 0:   
+           # print("Base case",self.eval_fn.score(game, game.active_player))                        
+            return self.eval_fn.score(game, player)
+
+
+        # RECURSUVE CASE for the maximizer
+        def max_value(game, alpha, beta, depth):
+              
+           #v= best value seen so far at previous node
+            v = -infinity
+            moves = game.get_legal_moves(player)
             for move in moves:
-                Board = game.forecast_move(move)
-                moveVal,currentMove = self.alphabeta(Board, depth - 1, alpha=alpha, beta=beta)
-                if moveVal<bestVal:
-                    bestVal=moveVal
-                    bestMove=move
-                beta = min(beta, bestVal) 
-                if bestVal <= alpha: break 
-            return bestVal,bestMove
-        
+                game.forecast_move(move)
+                score.append
+         #determinine maximum value in next state
+            v = max(v, min_value(game.for = in xrange(1,10):
+                passself.eval_fn.score(game, player), alpha, beta, depth-1))
+            #Prune if current value better than next value
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
        
+
+        def min_value(game, alpha, beta, depth):  
+            #v= best value seen so far at previous node
+            v = infinity
+            moves = game.get_legal_moves(player)
+            for move in moves:
+                game.forecast_move(move)
+    
+            #determinine maximum value in next state
+            v = min(v, max_value(eval_fn(game), alpha, beta, depth-1))
+            #Prune if current value better than next value
+            move = self.alphabeta(game.forecast_move(move), depth - 1, alpha=alpha, beta=beta, maximizing_player=False)               
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+            return v        
+    
+
+        if maximizing_player:
+            max_value(game,alpha,beta,depth)
+        else:
+            min_value(game,alpha,beta,depth)
+    
+
+         return move
+    """
+    """
+    """
